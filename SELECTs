@@ -1,0 +1,352 @@
+-- СЕЛЕКТИ від користувача --
+
+-- 1. Авторизація користувача (?)
+-- (1, 'Олександр', 'Петров', 'alex_petrov', 'м', '1990-05-15', 123456789, 'alex_petrov@example.com', 10, 'password123', 'Київ'),
+
+SELECT * 
+FROM 
+    `customer` 
+WHERE 
+     `user_name` = 'alex_petrov' AND `password` = 'password123';
+
+
+-- 2. Перегляд інформації про товар: назва, постачальник, ціна, розміри (висота, ширина, довжина), колір та матеріал
+-- Всього 100 шт.
+
+SELECT 
+    p.product_id AS 'ID',
+    p.product_name AS 'Назва', 
+    p.price AS 'Ціна', 
+    p.height AS 'Висота', 
+    p.width AS 'Ширина', 
+    p.length AS 'Довжина',
+	p.color AS 'Колір',
+	p.material AS 'Матеріал',    
+	p.manufacture AS 'Виробник'
+FROM 
+    `product` AS p 
+WHERE 
+    p.product_id = 100;
+
+
+-- 3. Перегляд товарів, що виготовлені з певного матеріалу
+-- Варіанти: Дерево, Метал, Скло, ДСП, Тканина, Штучна шкіра, Пластик, Камінь
+
+SELECT 
+    p.product_id AS 'ID',
+    p.product_name AS 'Назва', 
+    p.product_description AS 'Опис', 
+    p.category AS 'Категорія', 
+    p.manufacture AS 'Виробник', 
+    p.amount AS 'Кількість', 
+    p.price AS 'Ціна', 
+    p.color AS 'Колір', 
+    p.material AS 'Матеріал' 
+FROM 
+    `product` AS p 
+WHERE 
+    p.material = 'Дерево';
+
+-- 4. Перегляд усіх товарів, що належать до певної категорії
+-- Варіанти: Меблі для спальні, офісу, вітальні, їдальні, кухні, дитячої, прихожої, ванної, саду, кемпінгу, Декоративні аксесуари
+
+SELECT 
+    p.product_id AS 'ID',
+    p.product_name AS 'Назва', 
+    p.product_description AS 'Опис', 
+    p.category AS 'Категорія', 
+    p.manufacture AS 'Виробник', 
+    p.amount AS 'Кількість', 
+    p.price AS 'Ціна', 
+    p.color AS 'Колір', 
+    p.material AS 'Матеріал' 
+FROM 
+    `product` AS p  
+WHERE 
+    p.category = 'Меблі для салону краси';
+
+
+-- СЕЛЕКТИ АНАЛІТИЧНІ --
+
+-- 5. Перегляд усіх товарів певної категорії з відображенням їх ціни та кількості замовлень кожної одиниці (відсортувати від набільш популярних позицій до найменш)
+-- Варіанти: Меблі для спальні, офісу, вітальні, їдальні, кухні, дитячої, прихожої, ванної, саду, кемпінгу, Декоративні аксесуари
+
+SELECT 
+    p.product_name AS 'Назва', 
+    p.price AS 'Ціна', 
+    p.category AS 'Категорія', 
+    COUNT(o.orders_id) AS 'Кількість замовлень' 
+FROM 
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+WHERE 
+    p.category = 'Меблі для кухні' 
+GROUP BY 
+    p.product_id 
+ORDER BY 
+    COUNT(o.orders_id) DESC;
+
+-- 6. Список найпопулярніших товарів за певний період часу (з зазначенням ціни)
+
+SELECT 
+    p.product_name AS 'Назва', 
+    p.price AS 'Ціна', 
+    SUM(o.amount) AS 'Кількість_продажів' 
+FROM 
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+WHERE 
+    o.order_date BETWEEN '2023-01-02 16:00:00' AND '2024-05-19 20:20:00' 
+GROUP BY 
+    p.product_id 
+ORDER BY 
+    SUM(o.amount) DESC;
+
+-- 7. Список всіх клієнтів, загальна вартість їх замовлень та їх знижка, посортувати за найприбутковішим клієнтом
+
+SELECT 
+    c.customer_id, 
+    c.first_name, 
+    c.last_name, 
+    c.discount,
+    SUM(p.price * o.amount) AS 'Загальна_вартість_замовлень' 
+FROM 
+    `customer` AS c 
+JOIN 
+    `Invoice` AS i ON c.customer_id = i.customer_id 
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id 
+JOIN 
+    `product` AS p ON o.product_id = p.product_id 
+GROUP BY 
+    c.customer_id 
+ORDER BY 
+    SUM(p.price * o.amount) DESC; 
+
+-- 8. Рейтинг категорій товарів за кількістю продажів
+
+SELECT 
+    p.category AS 'Категорія', 
+    COUNT(o.orders_id) AS 'Кількість_продажів' 
+FROM 
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+GROUP BY 
+    p.category 
+ORDER BY 
+    COUNT(o.orders_id) DESC;
+
+-- 9. Список клієнтів, які здійснили певну кількість замовлень
+
+SELECT 
+    c.customer_id, 
+    c.first_name, 
+    c.last_name, 
+    COUNT(o.orders_id) AS 'Кількість_замовлень' 
+FROM 
+    `customer` AS c 
+JOIN 
+    `Invoice` AS i ON c.customer_id = i.customer_id 
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id 
+GROUP BY 
+    c.customer_id 
+HAVING 
+    COUNT(o.orders_id) >= 4
+ORDER BY 
+    COUNT(o.orders_id) DESC;
+
+-- 10. Список клієнтів з загальною вартістю замовлень більше певної суми
+
+SELECT 
+    c.customer_id, 
+    c.first_name, 
+    c.last_name, 
+    SUM(p.price * o.amount) AS 'Загальна_вартість_замовлень' 
+FROM 
+    `customer` AS c 
+JOIN 
+    `Invoice` AS i ON c.customer_id = i.customer_id 
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id 
+JOIN 
+    `product` AS p ON o.product_id = p.product_id 
+GROUP BY 
+    c.customer_id 
+HAVING 
+    SUM(p.price * o.amount) > 10000;
+
+-- 11. Кількість проданих одиниць кожного товару
+
+SELECT 
+    p.product_id AS 'ID', 
+    p.product_name AS 'Назва', 
+    SUM(o.amount) AS 'Кількість_проданих_одиниць' 
+FROM 
+    `product` AS p 
+JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+GROUP BY 
+    p.product_id, p.product_name 
+ORDER BY 
+    SUM(o.amount) DESC;
+
+-- 12. Кількість проданих одиниць товару в певний період часу
+
+SELECT 
+    p.product_id AS 'ID', 
+    p.product_name AS 'Назва', 
+    SUM(o.amount) AS 'Кількість_проданих_одиниць' 
+FROM 
+    `product` AS p 
+JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+WHERE 
+    o.order_date BETWEEN '2023-01-02 16:00:00' AND '2024-05-19 20:20:00'
+GROUP BY 
+    p.product_id, p.product_name
+    ORDER BY 
+    SUM(o.amount) DESC;
+
+-- 13. Список товарів, що були куплені більше певної кількості разів
+
+SELECT 
+    p.product_id AS 'ID', 
+    p.product_name AS 'Назва', 
+    SUM(o.amount) AS 'Кількість_проданих_одиниць' 
+FROM 
+    `product` AS p 
+JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+GROUP BY 
+    p.product_id, p.product_name 
+HAVING 
+    SUM(o.amount) > 5
+        ORDER BY 
+    SUM(o.amount) DESC;
+
+-- 14. Статистика замовлень товарів у різні міста за певний період часу
+
+SELECT 
+    c.city AS 'Місто',
+    COUNT(DISTINCT i.invoice_id) AS 'Кількість_замовлень',
+    SUM(p.price * o.amount) AS 'Загальна_вартість_замовлень'
+FROM 
+    `customer` AS c 
+JOIN 
+    `Invoice` AS i ON c.customer_id = i.customer_id 
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id 
+JOIN 
+    `product` AS p ON o.product_id = p.product_id 
+WHERE 
+    i.transaction_moment BETWEEN '2023-01-02 16:00:00' AND '2024-05-19 20:20:00'
+GROUP BY 
+    c.city
+ORDER BY 
+    COUNT(DISTINCT i.invoice_id) DESC;
+
+
+-- 15. Статистика продажу товарів різних виробників за роками
+
+SELECT 
+    p.manufacture AS 'Виробник',
+    YEAR(i.transaction_moment) AS 'Рік',
+    COUNT(DISTINCT o.orders_id) AS 'Кількість_замовлень',
+    SUM(p.price * o.amount) AS 'Загальна_вартість_замовлень'
+FROM 
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+LEFT JOIN 
+    `Invoice` AS i ON o.invoice_id = i.invoice_id 
+GROUP BY 
+    p.manufacture, YEAR(i.transaction_moment)
+ORDER BY 
+    p.manufacture, YEAR(i.transaction_moment);
+
+
+-- 16. Список товарів, які не були куплені жодним клієнтом, з вказанням виробника та ціни товару.
+
+SELECT 
+    p.product_name AS 'Назва',
+    p.manufacture AS 'Виробник',
+    p.price AS 'Ціна'
+FROM 
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+WHERE 
+    o.orders_id IS NULL;
+
+
+-- 17. Показати  постачальників та кількість різних категорій продуктів, які вони постачають з вказанням цих категорій
+
+SELECT 
+    p.manufacture AS 'Постачальник',
+    GROUP_CONCAT(DISTINCT p.category ORDER BY p.category ASC) AS 'Категорії_продуктів',
+    COUNT(DISTINCT p.category) AS 'Кількість_категорій'
+FROM 
+    `product` AS p
+GROUP BY 
+    p.manufacture;
+
+
+-- 18. Неоплачені замовлення (Статус "В процесі")
+
+SELECT 
+    i.invoice_id AS 'Чек',
+    c.user_name AS 'Клієнт',
+    SUM(p.price * o.amount) AS 'Сума замовлення',
+    i.transaction_moment AS 'Дата'
+FROM 
+    `Invoice` AS i
+JOIN 
+    `customer` AS c ON i.customer_id = c.customer_id
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id
+JOIN 
+    `product` AS p ON o.product_id = p.product_id
+WHERE 
+    i.status = 'В процесі'
+GROUP BY 
+    i.invoice_id, c.user_name, i.transaction_moment;
+
+
+-- 19. Відобразити всі товари, їх ціну та кількість разів, коли їх замовляли
+
+SELECT 
+    p.product_name AS 'Назва',
+    p.price AS 'Ціна',
+    (SELECT 
+         COUNT(*) 
+     FROM 
+         orders o 
+     WHERE 
+         o.product_id = p.product_id
+    ) AS 'Кількість_замовлень'
+FROM 
+    `product` p;
+
+
+-- 20. Відобразити всі товари та кількість їх замовлень за певний період часу, а також загальну кількість замовлень
+
+SELECT 
+    p.product_id,
+    p.product_name,
+    (SELECT COUNT(*) FROM orders o WHERE o.product_id = p.product_id AND o.order_date BETWEEN '2024-01-01' AND '2024-12-31') AS orders_count,
+    (SELECT COUNT(*) FROM orders) AS total_orders_count
+FROM 
+    product p;
+
+
+
+-- Підняти ціну товару на певний відсоток (10%)  (?)
+-- (1 + <відсоток> / 100)
+
+UPDATE `product`
+SET `price` = `price` * (1 + 2 / 100)
+WHERE `product_id` = 1;

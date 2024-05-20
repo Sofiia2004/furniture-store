@@ -233,7 +233,7 @@ customer;
 
 INSERT INTO `customer` (`customer_id`, `first_name`, `last_name`, `user_name`, `gender`, `birth_date`, `phone_number`, `email`, `discount`, `password`, `city`) 
 VALUES 
-(1, 'Олександр', 'Петров', 'alex_petrov', 'м', '1990-05-15', 123456789, 'alex_petrov@example.com', 10, 'password123', 'Київ'),
+(1, 'Олександр', 'Петров', 'alex_petrov', 'ч', '1990-05-15', 123456789, 'alex_petrov@example.com', 10, 'password123', 'Київ'),
 (2, 'Ірина', 'Сидорова', 'irina_sidorova', 'ж', '1985-08-22', 987654321, 'irina_sidorova@example.com', 5, 'qwerty456', 'Львів'),
 (3, 'Михайло', 'Іваненко', 'misha_ivanenko', 'ч', '1992-03-10', 555555555, 'misha_ivanenko@example.com', NULL, 'misha123', 'Харків'),
 (4, 'Ольга', 'Григоренко', 'olga_grigorenko', 'ж', '1988-12-05', 333333333, 'olga_grigorenko@example.com', 15, 'pass1234', 'Одеса'),

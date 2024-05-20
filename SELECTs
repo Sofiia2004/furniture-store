@@ -343,6 +343,16 @@ FROM
     product p;
 
 
+-- 21. Хто більше купує ч чи ж
+
+SELECT 
+    gender AS 'Стать',
+    COUNT(*) AS Покупки
+FROM 
+    customer
+GROUP BY 
+    gender;
+
 
 -- Підняти ціну товару на певний відсоток (10%)  (?)
 -- (1 + <відсоток> / 100)

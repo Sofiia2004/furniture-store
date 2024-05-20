@@ -358,6 +358,20 @@ GROUP BY
     c.gender; 
 
 
+-- 21. Обрати 5 найпопуярніших товарів та підняти їх ціну на 5%
+
+UPDATE product
+SET price = price * 1.05
+WHERE product_id IN (
+    SELECT product_id
+    FROM (
+        SELECT product_id
+        FROM orders
+        GROUP BY product_id
+        ORDER BY COUNT(*) DESC
+        LIMIT 5
+    ) AS top_products
+);
 
 
 -- Підняти ціну товару на певний відсоток (10%)  (?)

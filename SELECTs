@@ -1,3 +1,5 @@
+-- СЕЛЕКТИ --
+
 -- СЕЛЕКТИ від користувача --
 
 -- 1. Авторизація користувача (?)
@@ -10,8 +12,8 @@ WHERE
      `user_name` = 'alex_petrov' AND `password` = 'password123';
 
 
--- 2. Перегляд інформації про товар: назва, постачальник, ціна, розміри (висота, ширина, довжина), колір та матеріал
--- Всього 100 шт.
+-- 2. Перегляд інформації про товар за ІД: назва, постачальник, ціна, розміри (висота, ширина, довжина), колір та матеріал
+-- Всього товарів 100 шт.
 
 SELECT 
     p.product_id AS 'ID',
@@ -47,6 +49,7 @@ FROM
 WHERE 
     p.material = 'Дерево';
 
+
 -- 4. Перегляд усіх товарів, що належать до певної категорії
 -- Варіанти: Меблі для спальні, офісу, вітальні, їдальні, кухні, дитячої, прихожої, ванної, саду, кемпінгу, Декоративні аксесуари
 
@@ -63,7 +66,7 @@ SELECT
 FROM 
     `product` AS p  
 WHERE 
-    p.category = 'Меблі для салону краси';
+    p.category = 'Меблі для спальні';
 
 
 -- СЕЛЕКТИ АНАЛІТИЧНІ --
@@ -78,8 +81,8 @@ SELECT
     COUNT(o.orders_id) AS 'Кількість замовлень' 
 FROM 
     `product` AS p 
-LEFT JOIN 
-    `orders` AS o ON p.product_id = o.product_id 
+JOIN 
+    `orders` AS o ON p.product_id = o.product_id  -- INNER JOIN замість Лефт, мало б працювати
 WHERE 
     p.category = 'Меблі для кухні' 
 GROUP BY 
@@ -87,12 +90,15 @@ GROUP BY
 ORDER BY 
     COUNT(o.orders_id) DESC;
 
+
+
 -- 6. Список найпопулярніших товарів за певний період часу (з зазначенням ціни)
 
 SELECT 
     p.product_name AS 'Назва', 
     p.price AS 'Ціна', 
-    SUM(o.amount) AS 'Кількість_продажів' 
+    SUM(o.amount) AS 'Кількість_продажів',
+    SUM(p.price * o.amount) AS 'Прибуток' 
 FROM 
     `product` AS p 
 LEFT JOIN 
@@ -104,7 +110,66 @@ GROUP BY
 ORDER BY 
     SUM(o.amount) DESC;
 
--- 7. Список всіх клієнтів, загальна вартість їх замовлень та їх знижка, посортувати за найприбутковішим клієнтом
+
+
+-- 7. Рейтинг категорій товарів за кількістю продажів
+
+SELECT 
+    p.category AS 'Категорія', 
+    COUNT(o.orders_id) AS 'Кількість_продажів' 
+FROM 
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+GROUP BY 
+    p.category 
+ORDER BY 
+    COUNT(o.orders_id) DESC;
+
+
+-- 8. Список клієнтів, які здійснили певну кількість замовлень
+
+SELECT 
+    c.customer_id, 
+    c.first_name, 
+    c.last_name, 
+    COUNT(o.orders_id) AS 'Кількість_замовлень' 
+FROM 
+    `customer` AS c 
+JOIN 
+    `Invoice` AS i ON c.customer_id = i.customer_id 
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id 
+GROUP BY 
+    c.customer_id 
+HAVING 
+    COUNT(o.orders_id) >= 4
+ORDER BY 
+    COUNT(o.orders_id) DESC;
+
+
+-- 9. Список клієнтів з загальною вартістю замовлень більше певної суми
+
+SELECT 
+    c.customer_id, 
+    c.first_name, 
+    c.last_name, 
+    SUM(p.price * o.amount) AS 'Загальна_вартість_замовлень' 
+FROM 
+    `customer` AS c 
+JOIN 
+    `Invoice` AS i ON c.customer_id = i.customer_id 
+JOIN 
+    `orders` AS o ON i.invoice_id = o.invoice_id 
+JOIN 
+    `product` AS p ON o.product_id = p.product_id 
+GROUP BY 
+    c.customer_id 
+HAVING 
+    SUM(p.price * o.amount) > 10000;
+
+
+-- 10. Список всіх клієнтів, загальна вартість їх замовлень та їх знижка, посортувати за найприбутковішим клієнтом
 
 SELECT 
     c.customer_id, 
@@ -125,76 +190,8 @@ GROUP BY
 ORDER BY 
     SUM(p.price * o.amount) DESC; 
 
--- 8. Рейтинг категорій товарів за кількістю продажів
 
-SELECT 
-    p.category AS 'Категорія', 
-    COUNT(o.orders_id) AS 'Кількість_продажів' 
-FROM 
-    `product` AS p 
-LEFT JOIN 
-    `orders` AS o ON p.product_id = o.product_id 
-GROUP BY 
-    p.category 
-ORDER BY 
-    COUNT(o.orders_id) DESC;
-
--- 9. Список клієнтів, які здійснили певну кількість замовлень
-
-SELECT 
-    c.customer_id, 
-    c.first_name, 
-    c.last_name, 
-    COUNT(o.orders_id) AS 'Кількість_замовлень' 
-FROM 
-    `customer` AS c 
-JOIN 
-    `Invoice` AS i ON c.customer_id = i.customer_id 
-JOIN 
-    `orders` AS o ON i.invoice_id = o.invoice_id 
-GROUP BY 
-    c.customer_id 
-HAVING 
-    COUNT(o.orders_id) >= 4
-ORDER BY 
-    COUNT(o.orders_id) DESC;
-
--- 10. Список клієнтів з загальною вартістю замовлень більше певної суми
-
-SELECT 
-    c.customer_id, 
-    c.first_name, 
-    c.last_name, 
-    SUM(p.price * o.amount) AS 'Загальна_вартість_замовлень' 
-FROM 
-    `customer` AS c 
-JOIN 
-    `Invoice` AS i ON c.customer_id = i.customer_id 
-JOIN 
-    `orders` AS o ON i.invoice_id = o.invoice_id 
-JOIN 
-    `product` AS p ON o.product_id = p.product_id 
-GROUP BY 
-    c.customer_id 
-HAVING 
-    SUM(p.price * o.amount) > 10000;
-
--- 11. Кількість проданих одиниць кожного товару
-
-SELECT 
-    p.product_id AS 'ID', 
-    p.product_name AS 'Назва', 
-    SUM(o.amount) AS 'Кількість_проданих_одиниць' 
-FROM 
-    `product` AS p 
-JOIN 
-    `orders` AS o ON p.product_id = o.product_id 
-GROUP BY 
-    p.product_id, p.product_name 
-ORDER BY 
-    SUM(o.amount) DESC;
-
--- 12. Кількість проданих одиниць товару в певний період часу
+-- 11. Кількість проданих одиниць товару в певний період часу  (СЕЛЕКТ 18 розширює, чи доцільно цей залишати?)
 
 SELECT 
     p.product_id AS 'ID', 
@@ -211,7 +208,8 @@ GROUP BY
     ORDER BY 
     SUM(o.amount) DESC;
 
--- 13. Список товарів, що були куплені більше певної кількості разів
+
+-- 12. Список товарів, що були куплені більше певної кількості разів
 
 SELECT 
     p.product_id AS 'ID', 
@@ -224,11 +222,12 @@ JOIN
 GROUP BY 
     p.product_id, p.product_name 
 HAVING 
-    SUM(o.amount) > 5
+    SUM(o.amount) > 5   -- Фільтрує результати, залишаючи лише ті рядки, де сума проданих одиниць перевищує 5
         ORDER BY 
     SUM(o.amount) DESC;
 
--- 14. Статистика замовлень товарів у різні міста за певний період часу
+
+-- 13. Статистика замовлень товарів у різні міста за певний період часу
 
 SELECT 
     c.city AS 'Місто',
@@ -250,7 +249,7 @@ ORDER BY
     COUNT(DISTINCT i.invoice_id) DESC;
 
 
--- 15. Статистика продажу товарів різних виробників за роками
+-- 14. Статистика продажу товарів різних виробників за роками
 
 SELECT 
     p.manufacture AS 'Виробник',
@@ -269,7 +268,7 @@ ORDER BY
     p.manufacture, YEAR(i.transaction_moment);
 
 
--- 16. Список товарів, які не були куплені жодним клієнтом, з вказанням виробника та ціни товару.
+-- 15. Список товарів, які не були куплені ні разу, з вказанням виробника та ціни товару.
 
 SELECT 
     p.product_name AS 'Назва',
@@ -283,7 +282,7 @@ WHERE
     o.orders_id IS NULL;
 
 
--- 17. Показати  постачальників та кількість різних категорій продуктів, які вони постачають з вказанням цих категорій
+-- 16. Показати  постачальників та кількість різних категорій продуктів, які вони постачають з вказанням цих категорій
 
 SELECT 
     p.manufacture AS 'Постачальник',
@@ -295,12 +294,14 @@ GROUP BY
     p.manufacture;
 
 
--- 18. Неоплачені замовлення (Статус "В процесі")
+-- ПОКАЗАТИ 17 --
+-- 17. Неоплачені замовлення (Статус "В процесі") (емейл клієнта, щоб з ним зв'язатися)
 
 SELECT 
     i.invoice_id AS 'Чек',
     c.user_name AS 'Клієнт',
-    SUM(p.price * o.amount) AS 'Сума замовлення',
+    c.email AS 'Електронна_адреса',
+    SUM(p.price * o.amount) AS 'Сума_замовлення',
     i.transaction_moment AS 'Дата'
 FROM 
     `Invoice` AS i
@@ -313,49 +314,58 @@ JOIN
 WHERE 
     i.status = 'В процесі'
 GROUP BY 
-    i.invoice_id, c.user_name, i.transaction_moment;
+    i.invoice_id, c.user_name, c.email, i.transaction_moment;
 
 
--- 19. Відобразити всі товари, їх ціну та кількість разів, коли їх замовляли
+-- ПОКАЗАТИ 18--
+/* 18. Відобразити всі товари та скільки разів вони були замовлені за певний період часу, 
+а також загальну кількість замовлень в категорії, до якої відноситься товар */
 
 SELECT 
-    p.product_name AS 'Назва',
-    p.price AS 'Ціна',
+    p.product_id AS 'ID_товару', 
+    p.product_name AS 'Назва_товару', 
+    COUNT(o.orders_id) AS 'Кількість_замовлень',
     (SELECT 
          COUNT(*) 
      FROM 
-         orders o 
+         orders o2 
+     JOIN 
+         product p2 ON o2.product_id = p2.product_id 
      WHERE 
-         o.product_id = p.product_id
-    ) AS 'Кількість_замовлень'
+         p2.category = p.category) AS 'Загальна_кількість_замовлень_в_категорії'
 FROM 
-    `product` p;
-
-
--- 20. Відобразити всі товари та кількість їх замовлень за певний період часу, а також загальну кількість замовлень
-
-SELECT 
-    p.product_id,
-    p.product_name,
-    (SELECT COUNT(*) FROM orders o WHERE o.product_id = p.product_id AND o.order_date BETWEEN '2024-01-01' AND '2024-12-31') AS orders_count,
-    (SELECT COUNT(*) FROM orders) AS total_orders_count
-FROM 
-    product p;
-
-
--- 21. Хто більше купує ч чи ж
-
-SELECT 
-    gender AS 'Стать',
-    COUNT(*) AS Покупки
-FROM 
-    customer
+    `product` AS p 
+LEFT JOIN 
+    `orders` AS o ON p.product_id = o.product_id 
+WHERE 
+    o.order_date BETWEEN '2023-01-02 16:00:00' AND '2024-05-19 20:20:00'
 GROUP BY 
-    gender;
+    p.product_id, p.product_name;
+
+
+-- 19. Хто більше купує ч чи ж
+
+SELECT 
+    c.gender AS 'Стать',
+    COUNT(DISTINCT i.invoice_id) AS 'Кількість_інвойсів'
+FROM 
+    customer c
+JOIN 
+    Invoice i ON c.customer_id = i.customer_id
+JOIN 
+    orders o ON i.invoice_id = o.invoice_id
+GROUP BY 
+    c.gender; 
+
+
 
 
 -- Підняти ціну товару на певний відсоток (10%)  (?)
 -- (1 + <відсоток> / 100)
+
+UPDATE `product`
+SET `price` = `price` * (1 + 2 / 100)
+WHERE `product_id` = 1;
 
 UPDATE `product`
 SET `price` = `price` * (1 + 2 / 100)

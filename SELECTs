@@ -358,6 +358,7 @@ GROUP BY
     c.gender; 
 
 
+-- можливо ПОКАЗАТИ 21 --
 -- 21. Обрати 5 найпопуярніших товарів та підняти їх ціну на 5%
 
 UPDATE product
@@ -381,6 +382,17 @@ UPDATE `product`
 SET `price` = `price` * (1 + 2 / 100)
 WHERE `product_id` = 1;
 
+
+-- 22. Прийняти нового прцівника на роботу
+
+INSERT INTO `employee` (`user_name`, `first_name`, `last_name`, `position`, `employment_date`, `manager_id`, `bonus`, `gender`, `birth_date`)
+VALUES ('john_doe', 'Джон', 'Доу', 'Склад працівник', '2024-05-19', NULL, 1000, 'ч', '1990-01-01');
+
+
+-- 23. Звільнити працівника
+
+DELETE FROM `employee`
+WHERE `user_name` = 'john_doe';
 UPDATE `product`
 SET `price` = `price` * (1 + 2 / 100)
 WHERE `product_id` = 1;
